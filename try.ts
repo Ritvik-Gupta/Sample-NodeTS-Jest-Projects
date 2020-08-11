@@ -1,3 +1,4 @@
-import node from './RE_to_Tree';
+import { Stack, ParseTree } from './RE_to_Tree';
 
-console.log(node);
+const parseTree = new ParseTree('(a+b*).c.a*');
+console.log(parseTree);
