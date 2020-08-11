@@ -46,95 +46,73 @@ export interface TreeNode {
 }
 
 export class ParseTree {
-	private head: TreeNode = {
-		value: '.',
-		left: null,
-		right: { value: '#', left: null, right: null },
-	};
+	private head: TreeNode;
 
 	constructor(private regExp: string) {
+		this.head = {
+			value: '.',
+			left: null,
+			right: { value: '#', left: null, right: null },
+		};
 		this.createTree();
 	}
 
-	private createTree(): void {
+	private createTree(): boolean {
 		const operStack: Stack<string> = new Stack(this.regExp.length);
 		const unitStack: Stack<TreeNode> = new Stack(this.regExp.length);
 
-		const operatorsPrec: Map<string, number> = new Map([
-			['*', 1],
-			['.', 2],
-			['+', 3],
-		]);
+		const unaryOperation = (type: string) => (): void => {
+			const unit = unitStack.pop();
+			unitStack.push({ value: type, left: unit, right: null });
+			operStack.pop();
+		};
 
-		const operators: Map<string, () => void> = new Map([
-			[
-				'*',
-				() => {
-					const unit = unitStack.pop();
-					unitStack.push({ value: '*', left: unit, right: null });
-					operStack.pop();
-				},
-			],
-			[
-				'.',
-				() => {
-					const unit2 = unitStack.pop();
-					const unit1 = unitStack.pop();
-					unitStack.push({ value: '.', left: unit1, right: unit2 });
-					operStack.pop();
-				},
-			],
-			[
-				'+',
-				() => {
-					const unit2 = unitStack.pop();
-					const unit1 = unitStack.pop();
-					unitStack.push({ value: '+', left: unit1, right: unit2 });
-					operStack.pop();
-				},
-			],
+		const binaryOperation = (type: string) => (): void => {
+			const unit2 = unitStack.pop();
+			const unit1 = unitStack.pop();
+			unitStack.push({ value: type, left: unit1, right: unit2 });
+			operStack.pop();
+		};
+
+		const operators: Map<string, { pos: number; apply: () => void }> = new Map([
+			['*', { pos: 1, apply: unaryOperation('*') }],
+			['.', { pos: 2, apply: binaryOperation('.') }],
+			['+', { pos: 3, apply: binaryOperation('+') }],
 		]);
 
 		for (let r of this.regExp) {
 			if (r === '(') {
 				operStack.push(r);
-			} else if (operatorsPrec.has(r)) {
-				const operPrec = operatorsPrec.get(r);
-				while (true) {
-					const prevOper = operStack.peek === null ? '' : operStack.peek;
-					const prevOperPrec = operatorsPrec.get(prevOper);
-
-					if (prevOperPrec === undefined || operPrec === undefined) break;
-					if (prevOperPrec > operPrec) break;
-
-					const getUnit = operators.get(prevOper);
-					if (getUnit !== undefined) getUnit();
-				}
-				operStack.push(r);
 			} else if (r === ')') {
 				while (!operStack.isEmpty() && operStack.peek !== '(') {
-					const prevOper = operStack.peek === null ? '' : operStack.peek;
-					const getUnit = operators.get(prevOper);
-					if (getUnit !== undefined) getUnit();
+					const prevOper = operators.get(operStack.peek ?? '');
+					if (prevOper === undefined) return false;
+					prevOper.apply();
 				}
 				operStack.pop();
+			} else if (operators.has(r)) {
+				const operPos = operators.get(r)?.pos ?? -1;
+				while (!operStack.isEmpty() && operStack.peek !== '(') {
+					const prevOperPos = operators.get(operStack.peek ?? '')?.pos ?? -1;
+					if (prevOperPos > operPos) break;
+					const prevOper = operators.get(operStack.peek ?? '');
+					if (prevOper === undefined) return false;
+					prevOper.apply();
+				}
+				operStack.push(r);
 			} else {
 				unitStack.push({ value: r, left: null, right: null });
 			}
 		}
 
 		while (!operStack.isEmpty()) {
-			const prevOper = operStack.peek === null ? '' : operStack.peek;
-			const getUnit = operators.get(prevOper);
-			if (getUnit !== undefined) getUnit();
+			const prevOper = operators.get(operStack.peek ?? '');
+			if (prevOper === undefined) return false;
+			else prevOper.apply();
 		}
 
-		console.log(unitStack);
-		console.log(operStack);
-	}
-
-	static isValidRegExp(regExp: string): boolean {
-		return /^[a-z]\*?[.+][a-z]\*?$/i.test(regExp);
+		this.head.left = unitStack.array[0];
+		return true;
 	}
 
 	get tree(): TreeNode {
