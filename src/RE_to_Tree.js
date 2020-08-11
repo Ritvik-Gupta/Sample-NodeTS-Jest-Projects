@@ -36,6 +36,11 @@ class Stack {
     get array() {
         return [...this.arr];
     }
+    at(n) {
+        if (n > this.size || n < 0)
+            return null;
+        return this.arr[n];
+    }
 }
 exports.Stack = Stack;
 class ParseTree {
@@ -105,7 +110,7 @@ class ParseTree {
             else
                 prevOper.apply();
         }
-        this.head.left = unitStack.array[0];
+        this.head.left = unitStack.at(0);
         return true;
     }
     get tree() {

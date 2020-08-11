@@ -1,4 +1,4 @@
-import { Stack, ParseTree } from './RE_to_Tree';
+import { ParseTree } from './RE_to_Tree';
 
 const parseTree1 = new ParseTree('(a+b*).c.a*');
 console.log(JSON.stringify(parseTree1.tree, null, '\t'));

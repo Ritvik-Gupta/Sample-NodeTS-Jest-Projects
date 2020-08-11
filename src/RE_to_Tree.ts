@@ -37,6 +37,11 @@ export class Stack<genType = number | string | boolean> {
 	get array(): Array<genType | null> {
 		return [...this.arr];
 	}
+
+	at(n: number): genType | null {
+		if (n > this.size || n < 0) return null;
+		return this.arr[n];
+	}
 }
 
 export interface TreeNode {
@@ -111,7 +116,7 @@ export class ParseTree {
 			else prevOper.apply();
 		}
 
-		this.head.left = unitStack.array[0];
+		this.head.left = unitStack.at(0);
 		return true;
 	}
 
