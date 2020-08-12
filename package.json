@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "main.js",
 	"scripts": {
-		"test": "jest --coverage --watchAll"
+		"test": "jest --coverage"
 	},
 	"author": "",
 	"license": "ISC",
@@ -12,5 +12,8 @@
 		"@types/jest": "^26.0.9",
 		"jest": "^26.3.0",
 		"ts-jest": "^26.2.0"
+	},
+	"dependencies": {
+		"immer": "^7.0.7"
 	}
 }
