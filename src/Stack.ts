@@ -1,4 +1,4 @@
-import immer from 'immer';
+import immer from "immer";
 
 class Stack<genType = number | string | boolean> {
 	private top: number;
@@ -46,4 +46,4 @@ class Stack<genType = number | string | boolean> {
 	}
 }
 
-export default Stack;
+export { Stack };

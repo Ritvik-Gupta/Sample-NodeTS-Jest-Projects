@@ -1,89 +1,105 @@
-import immer, { immerable } from 'immer';
+import immer, { immerable } from "immer";
 
-import Stack from './Stack';
+import { TreeNode } from "./TreeNode";
+import { Stack } from "./Stack";
 
-export class TreeNode {
+class ParseTree {
 	[immerable] = true;
-	private leftChild: TreeNode | null;
-	private rightChild: TreeNode | null;
 
-	constructor(private value: string) {
-		this.leftChild = null;
-		this.rightChild = null;
-	}
-
-	left(left: TreeNode | null): TreeNode {
-		this.leftChild = left;
-		return this;
-	}
-
-	right(right: TreeNode | null): TreeNode {
-		this.rightChild = right;
-		return this;
-	}
-
-	children(left: TreeNode | null, right: TreeNode | null): TreeNode {
-		this.leftChild = left;
-		this.rightChild = right;
-		return this;
-	}
-}
-
-export default class ParseTree {
-	[immerable] = true;
 	private head: TreeNode;
+	private operStack: Stack<string>;
+	private unitStack: Stack<TreeNode>;
+
+	private operator: {
+		[key: string]: {
+			precedence: number;
+			operation: () => void;
+		};
+	};
 
 	constructor(private regExp: string) {
-		this.head = new TreeNode('.').right(new TreeNode('#'));
+		this.head = new TreeNode(".").addRight(new TreeNode("#"));
+		this.operStack = new Stack(this.regExp.length);
+		this.unitStack = new Stack(this.regExp.length);
+
+		this.operator = {
+			"*": {
+				precedence: 1,
+				operation: this.unaryOperation("*"),
+			},
+			".": {
+				precedence: 2,
+				operation: this.binaryOperation("."),
+			},
+			"+": {
+				precedence: 3,
+				operation: this.binaryOperation("+"),
+			},
+		};
 		this.createTree();
 	}
 
+	private unaryOperation = (type: string) => (): void => {
+		const unit = this.unitStack.pop();
+		this.unitStack.push(new TreeNode(type).addLeft(unit));
+		this.operStack.pop();
+	};
+
+	private binaryOperation = (type: string) => (): void => {
+		const unit2 = this.unitStack.pop();
+		const unit1 = this.unitStack.pop();
+		this.unitStack.push(new TreeNode(type).addChildren([unit1, unit2]));
+		this.operStack.pop();
+	};
+
 	private createTree(): void {
-		const operStack: Stack<string> = new Stack(this.regExp.length);
-		const unitStack: Stack<TreeNode> = new Stack(this.regExp.length);
-
-		const unaryOperation = (type: string) => (): void => {
-			unitStack.push(new TreeNode(type).left(unitStack.pop()));
-			operStack.pop();
-		};
-
-		const binaryOperation = (type: string) => (): void => {
-			unitStack.push(
-				new TreeNode(type).right(unitStack.pop()).left(unitStack.pop())
-			);
-			operStack.pop();
-		};
-
 		const applyPrevOper = (): void => {
-			const prevOper = operators.get(operStack.peek ?? '');
-			if (prevOper !== undefined) prevOper.apply();
+			const prevOper = this.operator[this.operStack.peek ?? ""];
+			if (prevOper !== undefined) prevOper.operation();
 		};
 
-		const operators: Map<string, { pos: number; apply: () => void }> = new Map([
-			['*', { pos: 1, apply: unaryOperation('*') }],
-			['.', { pos: 2, apply: binaryOperation('.') }],
-			['+', { pos: 3, apply: binaryOperation('+') }],
-		]);
-
-		for (let r of this.regExp) {
-			if (r === '(') operStack.push(r);
-			else if (r === ')') {
-				while (!operStack.isEmpty() && operStack.peek !== '(') applyPrevOper();
-				operStack.pop();
-			} else if (operators.has(r)) {
-				const operPos = operators.get(r)?.pos ?? -1;
+		for (let reu of this.regExp) {
+			if (reu === "(") this.operStack.push(reu);
+			else if (reu === ")") {
+				while (!this.operStack.isEmpty() && this.operStack.peek !== "(")
+					applyPrevOper();
+				this.operStack.pop();
+			} else if (this.operator[reu] !== undefined) {
+				const operPrecedence = this.operator[reu].precedence;
 				while (
-					!operStack.isEmpty() &&
-					operStack.peek !== '(' &&
-					(operators.get(operStack.peek ?? '')?.pos ?? -1) <= operPos
+					!this.operStack.isEmpty() &&
+					this.operStack.peek !== "(" &&
+					this.operator[this.operStack.peek ?? ""].precedence <= operPrecedence
 				)
 					applyPrevOper();
-				operStack.push(r);
-			} else unitStack.push(new TreeNode(r));
+				this.operStack.push(reu);
+			} else this.unitStack.push(new TreeNode(reu));
 		}
 
-		while (!operStack.isEmpty()) applyPrevOper();
-		this.head.left(unitStack.at(0));
+		while (!this.operStack.isEmpty()) applyPrevOper();
+		this.head.addLeft(this.unitStack.at(0));
+	}
+
+	static isValidUnit(node: TreeNode | null): boolean {
+		const operator: { [key: string]: (node: TreeNode) => boolean } = {
+			"*": node => node.left !== null && node.right === null,
+			".": node => node.left !== null && node.right !== null,
+			"+": node => node.left !== null && node.right !== null,
+		};
+
+		if (node === null) return false;
+		if (operator[node.value] !== undefined) return operator[node.value](node);
+		if (node.left === null && node.right === null) return true;
+
+		return false;
+	}
+
+	checkTree(node: TreeNode = this.head): boolean {
+		if (node.left !== null && this.checkTree(node.left) === false) return false;
+		if (ParseTree.isValidUnit(node) === false) return false;
+		if (node.right !== null && this.checkTree(node.right) === false) return false;
+
+		return true;
 	}
 
 	get tree(): TreeNode {
@@ -91,5 +107,7 @@ export default class ParseTree {
 	}
 }
 
-// const parseTree = new ParseTree('(a+b*).c.a*');
-// console.log(JSON.stringify(parseTree.tree, null, '-\t'));
+export { ParseTree };
+
+// const parseTree = new ParseTree("(a+b*).c.a*");
+// console.log(JSON.stringify(parseTree.tree, null, "-\t"));
