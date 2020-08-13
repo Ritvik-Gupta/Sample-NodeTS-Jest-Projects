@@ -19,23 +19,23 @@ class ParseTree {
 
 	constructor(private regExp: string) {
 		this.head = new TreeNode(".").addRight(new TreeNode("#"));
-		this.operStack = new Stack(this.regExp.length);
-		this.unitStack = new Stack(this.regExp.length);
+		this.operStack = new Stack();
+		this.unitStack = new Stack();
 
-		this.operator = {
-			"*": {
-				precedence: 1,
-				operation: this.unaryOperation("*"),
-			},
-			".": {
-				precedence: 2,
-				operation: this.binaryOperation("."),
-			},
-			"+": {
-				precedence: 3,
-				operation: this.binaryOperation("+"),
-			},
+		this.operator = {};
+		this.operator["*"] = {
+			precedence: 1,
+			operation: this.unaryOperation("*"),
 		};
+		this.operator["."] = {
+			precedence: 2,
+			operation: this.binaryOperation("."),
+		};
+		this.operator["+"] = {
+			precedence: 3,
+			operation: this.binaryOperation("+"),
+		};
+
 		this.createTree();
 	}
 
@@ -80,23 +80,9 @@ class ParseTree {
 		this.head.addLeft(this.unitStack.at(0));
 	}
 
-	static isValidUnit(node: TreeNode | null): boolean {
-		const operator: { [key: string]: (node: TreeNode) => boolean } = {
-			"*": node => node.left !== null && node.right === null,
-			".": node => node.left !== null && node.right !== null,
-			"+": node => node.left !== null && node.right !== null,
-		};
-
-		if (node === null) return false;
-		if (operator[node.value] !== undefined) return operator[node.value](node);
-		if (node.left === null && node.right === null) return true;
-
-		return false;
-	}
-
 	checkTree(node: TreeNode = this.head): boolean {
 		if (node.left !== null && this.checkTree(node.left) === false) return false;
-		if (ParseTree.isValidUnit(node) === false) return false;
+		if (TreeNode.isValid(node) === false) return false;
 		if (node.right !== null && this.checkTree(node.right) === false) return false;
 
 		return true;

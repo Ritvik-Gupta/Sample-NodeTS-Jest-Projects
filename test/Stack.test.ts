@@ -1,10 +1,9 @@
-import { Stack } from "../src/Stack";
+import { Stack, FiniteStack } from "../src/Stack";
 
 describe("Creates a Valid Stack", () => {
-	const stack = new Stack<number>(10);
-	const array: Array<any> = new Array(10).fill(null);
+	const stack = new FiniteStack<number>(10);
 
 	test("Creates a Blank Array Stack", () => {
-		expect(stack.array).toEqual(array);
+		expect(stack.array).toEqual([]);
 	});
 });

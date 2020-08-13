@@ -1,38 +1,35 @@
-import immer from "immer";
+import immer, { immerable } from "immer";
 
 class Stack<genType = number | string | boolean> {
-	private top: number;
-	private arr: Array<genType | null>;
+	[immerable] = true;
 
-	constructor(private size: number, arr?: Array<genType>) {
-		this.arr = new Array(this.size).fill(null);
+	protected top: number;
+	protected arr: Array<genType | null>;
+
+	constructor(arr?: Array<genType>) {
+		this.arr = [];
 		this.top = -1;
 		if (arr !== undefined) arr.forEach(el => this.push(el));
-	}
-
-	isFull(): boolean {
-		return this.top === this.size - 1;
 	}
 
 	isEmpty(): boolean {
 		return this.top === -1;
 	}
 
-	push(val: genType): boolean {
-		if (this.isFull()) return false;
-		this.arr[++this.top] = val;
-		return true;
+	push(val: genType): void {
+		this.arr.push(val);
+		++this.top;
 	}
 
 	pop(): genType | null {
 		if (this.isEmpty()) return null;
-		const val = this.arr[this.top];
-		this.arr[this.top--] = null;
+		const val = this.arr[this.top--];
+		this.arr.pop();
 		return val;
 	}
 
 	at(pos: number): genType | null {
-		if (pos > this.size || pos < 0) return null;
+		if (pos > this.top || pos < 0) return null;
 		return immer(this.arr[pos], () => {});
 	}
 
@@ -46,4 +43,22 @@ class Stack<genType = number | string | boolean> {
 	}
 }
 
-export { Stack };
+class FiniteStack<genType = number | string | boolean> extends Stack<genType> {
+	private size: number;
+	constructor(size: number, arr?: Array<genType>) {
+		super(arr);
+		this.size = size;
+	}
+
+	isFull(): boolean {
+		return this.top === this.size - 1;
+	}
+
+	push(val: genType): boolean {
+		if (this.isFull()) return false;
+		super.push(val);
+		return true;
+	}
+}
+
+export { Stack, FiniteStack };

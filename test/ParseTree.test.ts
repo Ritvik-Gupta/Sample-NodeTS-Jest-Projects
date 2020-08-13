@@ -24,7 +24,7 @@ const checkUnitValidity: Array<{
 describe(`Checking Unit Validity for a Unit of Parse Tree`, () => {
 	checkUnitValidity.forEach(unit => {
 		test(`r = "${unit.regExp}" is Valid`, () => {
-			expect(ParseTree.isValidUnit(unit.tree)).toBe(unit.valid);
+			expect(TreeNode.isValid(unit.tree)).toBe(unit.valid);
 		});
 	});
 });
