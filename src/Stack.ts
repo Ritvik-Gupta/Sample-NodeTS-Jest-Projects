@@ -16,9 +16,10 @@ class Stack<genType = number | string | boolean> {
 		return this.top === -1;
 	}
 
-	push(val: genType): void {
+	push(val: genType): boolean {
 		this.arr.push(val);
 		++this.top;
+		return true;
 	}
 
 	pop(): genType | null {
@@ -44,7 +45,7 @@ class Stack<genType = number | string | boolean> {
 }
 
 class FiniteStack<genType = number | string | boolean> extends Stack<genType> {
-	private size: number;
+	readonly size: number;
 	constructor(size: number, arr?: Array<genType>) {
 		super(arr);
 		this.size = size;

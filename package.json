@@ -4,17 +4,28 @@
 	"description": "",
 	"main": "main.js",
 	"scripts": {
-		"test": "jest --coverage"
+		"test": "jest --watch",
+		"coverage": "jest --coverage",
+		"cli": "ts-node ./cli"
 	},
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"@types/figlet": "^1.2.0",
+		"@types/inquirer": "^7.3.0",
 		"@types/jest": "^26.0.9",
+		"@types/prettyjson": "0.0.29",
 		"jest": "^26.3.0",
 		"ts-jest": "^26.2.0",
+		"ts-node": "^8.10.2",
 		"typescript": "^3.9.7"
 	},
 	"dependencies": {
-		"immer": "^7.0.7"
+		"chalk": "^4.1.0",
+		"figlet": "^1.5.0",
+		"immer": "^7.0.7",
+		"inquirer": "^7.3.3",
+		"ora": "^5.0.0",
+		"prettyjson": "^1.2.1"
 	}
 }
