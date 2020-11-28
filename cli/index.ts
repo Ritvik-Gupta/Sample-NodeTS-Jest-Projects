@@ -1,3 +1,3 @@
-import StackCLI from "./Stack.cli";
+import StackCLI from "./StackCLI";
 
 new StackCLI("Stack CLI");

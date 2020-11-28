@@ -1,9 +1,8 @@
 import immer, { immerable } from "immer";
-
-import { TreeNode } from "./TreeNode";
 import { Stack } from "./Stack";
+import { TreeNode } from "./TreeNode";
 
-class ParseTree {
+export class ParseTree {
 	[immerable] = true;
 
 	private head: TreeNode;
@@ -11,10 +10,12 @@ class ParseTree {
 	private unitStack: Stack<TreeNode>;
 
 	private operator: {
-		[key: string]: {
-			precedence: number;
-			operation: () => void;
-		};
+		[key: string]:
+			| {
+					precedence: number;
+					operation: () => void;
+			  }
+			| undefined;
 	};
 
 	constructor(private regExp: string) {
@@ -22,18 +23,19 @@ class ParseTree {
 		this.operStack = new Stack();
 		this.unitStack = new Stack();
 
-		this.operator = {};
-		this.operator["*"] = {
-			precedence: 1,
-			operation: this.unaryOperation("*"),
-		};
-		this.operator["."] = {
-			precedence: 2,
-			operation: this.binaryOperation("."),
-		};
-		this.operator["+"] = {
-			precedence: 3,
-			operation: this.binaryOperation("+"),
+		this.operator = {
+			"*": {
+				precedence: 1,
+				operation: this.unaryOperation("*"),
+			},
+			".": {
+				precedence: 2,
+				operation: this.binaryOperation("."),
+			},
+			"+": {
+				precedence: 3,
+				operation: this.binaryOperation("+"),
+			},
 		};
 
 		this.createTree();
@@ -48,7 +50,7 @@ class ParseTree {
 	private binaryOperation = (type: string) => (): void => {
 		const unit2 = this.unitStack.pop();
 		const unit1 = this.unitStack.pop();
-		this.unitStack.push(new TreeNode(type).addChildren([unit1, unit2]));
+		this.unitStack.push(new TreeNode(type).addKids(unit1, unit2));
 		this.operStack.pop();
 	};
 
@@ -58,22 +60,21 @@ class ParseTree {
 			if (prevOper !== undefined) prevOper.operation();
 		};
 
-		for (let reu of this.regExp) {
-			if (reu === "(") this.operStack.push(reu);
-			else if (reu === ")") {
-				while (!this.operStack.isEmpty() && this.operStack.peek !== "(")
-					applyPrevOper();
+		for (const expUnit of this.regExp) {
+			const asOperator = this.operator[expUnit];
+			if (expUnit === "(") this.operStack.push(expUnit);
+			else if (expUnit === ")") {
+				while (!this.operStack.isEmpty() && this.operStack.peek !== "(") applyPrevOper();
 				this.operStack.pop();
-			} else if (this.operator[reu] !== undefined) {
-				const operPrecedence = this.operator[reu].precedence;
-				while (
-					!this.operStack.isEmpty() &&
-					this.operStack.peek !== "(" &&
-					this.operator[this.operStack.peek ?? ""].precedence <= operPrecedence
-				)
+			} else if (asOperator !== undefined) {
+				while (!this.operStack.isEmpty() && this.operStack.peek !== "(") {
+					const operStackTopPrec = this.operator[this.operStack.peek ?? ""];
+					if (operStackTopPrec === undefined || operStackTopPrec.precedence > asOperator.precedence)
+						break;
 					applyPrevOper();
-				this.operStack.push(reu);
-			} else this.unitStack.push(new TreeNode(reu));
+				}
+				this.operStack.push(expUnit);
+			} else this.unitStack.push(new TreeNode(expUnit));
 		}
 
 		while (!this.operStack.isEmpty()) applyPrevOper();
@@ -92,8 +93,6 @@ class ParseTree {
 		return immer(this.head, () => {});
 	}
 }
-
-export { ParseTree };
 
 // const parseTree = new ParseTree("(a+b*).c.a*");
 // console.log(JSON.stringify(parseTree.tree, null, "-\t"));

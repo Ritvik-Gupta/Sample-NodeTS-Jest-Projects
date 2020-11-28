@@ -1,43 +1,42 @@
 import immer, { immerable } from "immer";
 
-class TreeNode {
+export class TreeNode {
 	[immerable] = true;
-	private leftChild: TreeNode | null;
-	private rightChild: TreeNode | null;
+	private leftKid: TreeNode | null;
+	private rightKid: TreeNode | null;
 
 	constructor(private nodeValue: string) {
-		this.leftChild = null;
-		this.rightChild = null;
+		this.leftKid = null;
+		this.rightKid = null;
 	}
 
 	addLeft(left: TreeNode | null): TreeNode {
-		this.leftChild = left;
+		this.leftKid = left;
 		return this;
 	}
 
 	addRight(right: TreeNode | null): TreeNode {
-		this.rightChild = right;
+		this.rightKid = right;
 		return this;
 	}
 
-	addChildren([left, right]: [TreeNode | null, TreeNode | null]): TreeNode {
-		this.leftChild = left;
-		this.rightChild = right;
+	addKids(...[left, right]: [TreeNode | null, TreeNode | null]): TreeNode {
+		this.leftKid = left;
+		this.rightKid = right;
 		return this;
 	}
 
 	static isValid(node: TreeNode | null): boolean {
-		const validOper: { [key: string]: (node: TreeNode) => boolean } = {
-			"*": node => node.left !== null && node.right === null,
-			".": node => node.left !== null && node.right !== null,
-			"+": node => node.left !== null && node.right !== null,
+		const validOper = {
+			"*": (node: TreeNode) => node.leftKid !== null && node.rightKid === null,
+			".": (node: TreeNode) => node.leftKid !== null && node.rightKid !== null,
+			"+": (node: TreeNode) => node.leftKid !== null && node.rightKid !== null,
 		};
 
 		if (node === null) return false;
-		if (validOper[node.value] !== undefined) return validOper[node.value](node);
-		if (node.left === null && node.right === null) return true;
-
-		return false;
+		return Object.keys(validOper).includes(node.value)
+			? validOper[node.value as keyof typeof validOper](node)
+			: node.left === null && node.right === null;
 	}
 
 	get value(): string {
@@ -45,16 +44,14 @@ class TreeNode {
 	}
 
 	get left(): TreeNode | null {
-		return immer(this.leftChild, () => {});
+		return immer(this.leftKid, () => {});
 	}
 
 	get right(): TreeNode | null {
-		return immer(this.rightChild, () => {});
+		return immer(this.rightKid, () => {});
 	}
 
-	get children(): [TreeNode | null, TreeNode | null] {
-		return immer([this.leftChild, this.rightChild], () => {});
+	get kids(): [TreeNode | null, TreeNode | null] {
+		return immer([this.leftKid, this.rightKid], () => {});
 	}
 }
-
-export { TreeNode };
