@@ -1,5 +1,5 @@
 import immer, { immerable } from "immer";
-import { Stack } from "./Stack";
+import { Stack } from "../Stack";
 import { TreeNode } from "./TreeNode";
 
 export class ParseTree {

@@ -2,15 +2,16 @@ export interface ArrCtx<T> {
 	val: T;
 	pos: number;
 }
-export type ArrGen<T> = Generator<ArrCtx<T> & { iteration: number }, void, boolean>;
+export type ItrCtx<T> = ArrCtx<T> & { iteration: number };
+export type ArrGen<T> = Generator<ItrCtx<T>, void, "reset" | "none">;
 
 type reduceCollection<T> = { collected: T };
 
 export function* createArrayGen<T>(arr: T[]): ArrGen<T> {
 	for (let iteration = 0; ; ++iteration)
 		for (let pos = 0; pos < arr.length; ++pos) {
-			const resetItr = yield { val: arr[pos], pos, iteration };
-			if (resetItr === true) {
+			const nextState = yield { val: arr[pos], pos, iteration };
+			if (nextState === "reset") {
 				iteration = -1;
 				yield { val: arr[pos], pos, iteration };
 				break;
@@ -27,7 +28,7 @@ export class LazyArray<T> {
 
 	map<U>(mapFn: (ctx: ArrCtx<T>) => U): LazyArray<U> {
 		const mapGen = function* ({ next }: ArrGen<T>): ArrGen<U> {
-			let nextVal = next();
+			let nextVal = next("none");
 			while (nextVal.done === false)
 				nextVal = next(yield { ...nextVal.value, val: mapFn(nextVal.value) });
 		};
@@ -36,10 +37,11 @@ export class LazyArray<T> {
 
 	filter(filterFn: (ctx: ArrCtx<T>) => boolean): LazyArray<T> {
 		const filterGen = function* ({ next }: ArrGen<T>): ArrGen<T> {
-			let nextVal = next(),
+			let nextVal = next("none"),
 				pos = 0;
 			while (nextVal.done === false) {
-				if (filterFn(nextVal.value) === false) nextVal = next();
+				if (nextVal.value.pos === 0) pos = 0;
+				if (filterFn(nextVal.value) === false) nextVal = next("none");
 				else {
 					nextVal = next(yield { ...nextVal.value, pos });
 					++pos;
@@ -53,16 +55,24 @@ export class LazyArray<T> {
 		if (skip <= 0) skip = 1;
 		if (take <= 0) take = 1;
 		const roundWalkGen = function* ({ next }: ArrGen<T>): ArrGen<T> {
-			let collected = 0,
+			let nextVal = next("none"),
 				pos = 0,
-				nextVal = next();
-			while (nextVal.done === false && collected < take) {
-				if ((pos + 1) % skip === 0) {
-					yield { ...nextVal.value, iteration: 0 };
-					++collected;
+				counted = 0,
+				iteration = 0;
+			while (nextVal.done === false) {
+				++counted;
+				if (counted % skip === 0) {
+					const yieldVal = yield { ...nextVal.value, pos, iteration };
+					++pos;
+					if (pos === take || yieldVal === "reset") {
+						next("reset");
+						pos = 0;
+						counted = 0;
+						iteration = yieldVal === "reset" ? 0 : iteration + 1;
+						if (yieldVal === "reset") yield { ...nextVal.value, pos, iteration };
+					}
 				}
-				++pos;
-				nextVal = next();
+				nextVal = next("none");
 			}
 		};
 		return new LazyArray(roundWalkGen(this.arrGen));
@@ -72,25 +82,35 @@ export class LazyArray<T> {
 		reduceFn: (ctx: ArrCtx<T> & reduceCollection<U>) => U,
 		{ collected }: reduceCollection<U>
 	): U {
-		let nextVal = this.arrGen.next(),
-			pos = 0;
+		let nextVal = this.arrGen.next("none");
 		while (nextVal.done === false && nextVal.value.iteration === 0) {
-			collected = reduceFn({ val: nextVal.value.val, pos, collected });
-			nextVal = this.arrGen.next();
-			++pos;
+			collected = reduceFn({ ...nextVal.value, collected });
+			nextVal = this.arrGen.next("none");
 		}
-		this.arrGen.next(true);
+		this.arrGen.next("reset");
 		return collected;
 	}
 
 	collect(): T[] {
 		const arr: T[] = [];
-		let nextVal = this.arrGen.next();
+		let nextVal = this.arrGen.next("none");
 		while (nextVal.done === false && nextVal.value.iteration === 0) {
 			arr.push(nextVal.value.val);
-			nextVal = this.arrGen.next();
+			nextVal = this.arrGen.next("none");
 		}
-		this.arrGen.next(true);
+		this.arrGen.next("reset");
+		return arr;
+	}
+
+	debug(numItr: number): ArrCtx<T>[] {
+		if (numItr <= 0) numItr = 1;
+		const arr: ArrCtx<T>[] = [];
+		let nextVal = this.arrGen.next("none");
+		while (nextVal.done === false && nextVal.value.iteration < numItr) {
+			arr.push(nextVal.value);
+			nextVal = this.arrGen.next("none");
+		}
+		this.arrGen.next("reset");
 		return arr;
 	}
 }

@@ -1,4 +1,4 @@
-import { TreeNode } from "../src/TreeNode";
+import { TreeNode } from "../src/re-to-dfa/TreeNode";
 
 const checkUnitValidity: Array<{
 	regExp: string;
