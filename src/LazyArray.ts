@@ -8,6 +8,7 @@ export type ArrGen<T> = Generator<ItrCtx<T>, void, "reset" | "none">;
 type reduceCollection<T> = { collected: T };
 
 export function* createArrayGen<T>(arr: T[]): ArrGen<T> {
+	if (arr.length === 0) return;
 	for (let iteration = 0; ; ++iteration)
 		for (let pos = 0; pos < arr.length; ++pos) {
 			const nextState = yield { val: arr[pos], pos, iteration };
@@ -68,8 +69,10 @@ export class LazyArray<T> {
 						next("reset");
 						pos = 0;
 						counted = 0;
-						iteration = yieldVal === "reset" ? 0 : iteration + 1;
-						if (yieldVal === "reset") yield { ...nextVal.value, pos, iteration };
+						if (yieldVal === "reset") {
+							yield { ...nextVal.value, pos, iteration };
+							iteration = 0;
+						} else ++iteration;
 					}
 				}
 				nextVal = next("none");
@@ -102,9 +105,9 @@ export class LazyArray<T> {
 		return arr;
 	}
 
-	debug(numItr: number): ArrCtx<T>[] {
+	debug(numItr: number): ItrCtx<T>[] {
 		if (numItr <= 0) numItr = 1;
-		const arr: ArrCtx<T>[] = [];
+		const arr: ItrCtx<T>[] = [];
 		let nextVal = this.arrGen.next("none");
 		while (nextVal.done === false && nextVal.value.iteration < numItr) {
 			arr.push(nextVal.value);
@@ -114,3 +117,23 @@ export class LazyArray<T> {
 		return arr;
 	}
 }
+
+export const arrayRoundWalk = <T>(arr: T[], skip: number, take: number): T[] => {
+	if (arr.length === 0) return [];
+	if (skip <= 0) skip = 1;
+	if (take <= 0) take = 1;
+	const roundArr: T[] = [];
+	let pos = 0,
+		counted = 0;
+	while (pos < take) {
+		for (const elm of arr) {
+			++counted;
+			if (counted % skip === 0) {
+				++pos;
+				roundArr.push(elm);
+				if (pos === take) break;
+			}
+		}
+	}
+	return roundArr;
+};

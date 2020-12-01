@@ -6,7 +6,7 @@ import { chooseOperAskQs, getPushValueAskQs, initStackAskQs } from "./questions"
 import * as $ from "./stackTypes";
 
 class StackCLI {
-	private stack: Stack | FiniteStack;
+	private stack: Stack<$.anyType> | FiniteStack<$.anyType>;
 	private types: Array<$.defTypes>;
 
 	private typeChecking: $.TypeChecking;
@@ -92,7 +92,7 @@ class StackCLI {
 
 	private async initStack(): Promise<{
 		dataTypes: Array<$.defTypes>;
-		stack: Stack | FiniteStack;
+		stack: Stack<$.anyType> | FiniteStack<$.anyType>;
 	}> {
 		const { isFiniteStack, dataTypes, size }: Answers = await initStackAskQs(this.typeChecking);
 
