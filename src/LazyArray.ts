@@ -1,11 +1,11 @@
+type reduceCollection<T> = { collected: T };
+
 export interface ArrCtx<T> {
 	val: T;
 	pos: number;
 }
 export type ItrCtx<T> = ArrCtx<T> & { iteration: number };
 export type ArrGen<T> = Generator<ItrCtx<T>, void, "reset" | "none">;
-
-type reduceCollection<T> = { collected: T };
 
 export function* createArrayGen<T>(arr: T[]): ArrGen<T> {
 	if (arr.length === 0) return;
@@ -21,7 +21,7 @@ export function* createArrayGen<T>(arr: T[]): ArrGen<T> {
 }
 
 export class LazyArray<T> {
-	constructor(private readonly arrGen: ArrGen<T>) {}
+	private constructor(private readonly arrGen: ArrGen<T>) {}
 
 	static create<T>(arr: T[]): LazyArray<T> {
 		return new LazyArray(createArrayGen(arr));
@@ -52,6 +52,19 @@ export class LazyArray<T> {
 		return new LazyArray(filterGen(this.arrGen));
 	}
 
+	reduce<U>(
+		reduceFn: (ctx: ArrCtx<T> & reduceCollection<U>) => U,
+		{ collected }: reduceCollection<U>
+	): U {
+		let nextVal = this.arrGen.next("none");
+		while (nextVal.done === false && nextVal.value.iteration === 0) {
+			collected = reduceFn({ ...nextVal.value, collected });
+			nextVal = this.arrGen.next("none");
+		}
+		this.arrGen.next("reset");
+		return collected;
+	}
+
 	roundWalk(skip: number, take: number): LazyArray<T> {
 		if (skip <= 0) skip = 1;
 		if (take <= 0) take = 1;
@@ -79,19 +92,6 @@ export class LazyArray<T> {
 			}
 		};
 		return new LazyArray(roundWalkGen(this.arrGen));
-	}
-
-	reduce<U>(
-		reduceFn: (ctx: ArrCtx<T> & reduceCollection<U>) => U,
-		{ collected }: reduceCollection<U>
-	): U {
-		let nextVal = this.arrGen.next("none");
-		while (nextVal.done === false && nextVal.value.iteration === 0) {
-			collected = reduceFn({ ...nextVal.value, collected });
-			nextVal = this.arrGen.next("none");
-		}
-		this.arrGen.next("reset");
-		return collected;
 	}
 
 	collect(): T[] {

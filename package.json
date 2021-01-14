@@ -28,6 +28,7 @@
 		"inquirer": "^7.3.3",
 		"object-sizeof": "^1.6.1",
 		"ora": "^5.1.0",
-		"prettyjson": "^1.2.1"
+		"prettyjson": "^1.2.1",
+		"reflect-metadata": "^0.1.13"
 	}
 }
