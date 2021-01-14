@@ -11,10 +11,10 @@ export function* createArrayGen<T>(arr: T[]): ArrGen<T> {
 	if (arr.length === 0) return;
 	for (let iteration = 0; ; ++iteration)
 		for (let pos = 0; pos < arr.length; ++pos) {
-			const nextState = yield { val: arr[pos], pos, iteration };
+			const nextState = yield { val: arr[pos]!, pos, iteration };
 			if (nextState === "reset") {
 				iteration = -1;
-				yield { val: arr[pos], pos, iteration };
+				yield { val: arr[pos]!, pos, iteration };
 				break;
 			}
 		}

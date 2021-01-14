@@ -23,19 +23,19 @@ export class Stack<T> {
 
 	pop(): T | null {
 		if (this.isEmpty()) return null;
-		const val = this.arr[this.top--];
+		const val = this.arr[this.top--]!;
 		this.arr.pop();
 		return val;
 	}
 
 	at(pos: number): T | null {
 		if (pos > this.top || pos < 0) return null;
-		return produce(this.arr[pos], () => {});
+		return produce(this.arr[pos]!, () => {});
 	}
 
 	get peek(): T | null {
 		if (this.isEmpty()) return null;
-		return produce(this.arr[this.top], () => {});
+		return produce(this.arr[this.top]!, () => {});
 	}
 
 	get array(): T[] {
