@@ -1,4 +1,4 @@
-import { arrayRoundWalk, ArrCtx, createArrayGen, LazyArray } from "../src/LazyArray";
+import { arrayRoundWalk, ArrCtx, createArrayGen, LazyArray } from "./LazyArray";
 
 const dataset: number[][] = [
 	Array.from({ length: 10 }, (_, pos) => pos * 15),

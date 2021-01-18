@@ -1,4 +1,4 @@
-import { FiniteStack, Stack } from "../src/Stack";
+import { FiniteStack, Stack } from "./Stack";
 
 describe("Creates a Valid Stack", () => {
 	const stack = new Stack<number>([1, 2, 4, 5]);

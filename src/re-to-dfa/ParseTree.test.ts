@@ -1,5 +1,5 @@
-import { TreeNode } from "../src/re-to-dfa/TreeNode";
-import { ParseTree } from "../src/re-to-dfa/ParseTree";
+import { TreeNode } from "./TreeNode";
+import { ParseTree } from "./ParseTree";
 
 describe(`Creating a Parse Tree r = "(a+b*).c.a*"`, () => {
 	const parseTree = new ParseTree("(a+b*).c.a*");
