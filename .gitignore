@@ -3,5 +3,5 @@ coverage/
 dist/
 .vscode
 
-jest.config.js
+jest.config.ts
 tsconfig.json
