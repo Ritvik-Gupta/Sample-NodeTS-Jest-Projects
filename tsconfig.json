@@ -5,6 +5,7 @@
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"allowJs": true,
+		"noImplicitAny": true,
 		"declaration": false,
 		"downlevelIteration": true,
 		"skipLibCheck": true,

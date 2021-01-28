@@ -1,5 +1,5 @@
-import { GraphNode } from "./GraphNode";
-import { ID, Unsigned, Validate } from "./graphValidation";
+import { Int, Unsigned, Validate } from "../assets";
+import { GraphNode, ID } from "./GraphNode";
 
 interface IWeight {
 	weight: number;
@@ -71,7 +71,11 @@ export class DirectedGraph<T> {
 	}
 
 	@Validate
-	public connect(@ID ownerId: string, @ID neighbourId: string, @Unsigned weight: number): void {
+	public connect(
+		@ID ownerId: string,
+		@ID neighbourId: string,
+		@Unsigned @Int weight: number
+	): void {
 		if (this.hasNeighbour(ownerId, neighbourId)) return;
 		const ownerNode = this.get(ownerId);
 		const neighbourNode = this.get(neighbourId);

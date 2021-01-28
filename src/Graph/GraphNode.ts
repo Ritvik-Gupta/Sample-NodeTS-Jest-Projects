@@ -1,4 +1,10 @@
 import { immerable, produce } from "immer";
+import { createParamDecorator } from "../assets";
+
+export const ID = createParamDecorator(param => ({
+	validate: typeof param === "string" && GraphNode.validate(param),
+	error: Error(`Node with ID = '${param}' not Initialized`),
+}));
 
 export interface IGraphNode<T> {
 	readonly id: string;

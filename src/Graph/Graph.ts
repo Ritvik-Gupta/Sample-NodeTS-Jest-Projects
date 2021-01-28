@@ -1,6 +1,6 @@
+import { Int, Unsigned, Validate } from "../assets";
 import { DirectedGraph, IEdge } from "./DirectedGraph";
-import { GraphNode } from "./GraphNode";
-import { ID, Unsigned, Validate } from "./graphValidation";
+import { GraphNode, ID } from "./GraphNode";
 
 interface IGraphCreate<T> {
 	vertices: Record<string, T>;
@@ -23,7 +23,11 @@ export class Graph<T> extends DirectedGraph<T> {
 	}
 
 	@Validate
-	public connect(@ID ownerId: string, @ID neighbourId: string, @Unsigned weight: number): void {
+	public connect(
+		@ID ownerId: string,
+		@ID neighbourId: string,
+		@Unsigned @Int weight: number
+	): void {
 		if (this.hasNeighbour(ownerId, neighbourId)) return;
 		const ownerNode = this.get(ownerId);
 		const neighbourNode = this.get(neighbourId);

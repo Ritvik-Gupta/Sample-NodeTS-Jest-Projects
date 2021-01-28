@@ -1,45 +1,36 @@
-import { produce, immerable } from "immer";
-
 export class Stack<T> {
-	readonly [immerable] = true;
-	protected top: number;
-	protected arr: T[];
+	protected readonly arr: T[];
 
-	constructor(prevStack?: T[]) {
+	public constructor(prevStack?: T[]) {
 		this.arr = [];
-		this.top = -1;
-		if (prevStack !== undefined) prevStack.forEach(el => this.push(el));
+		if (prevStack !== undefined) prevStack.forEach(elm => this.push(elm));
 	}
 
-	isEmpty(): boolean {
-		return this.top === -1;
+	public isEmpty(): boolean {
+		return this.arr.length === 0;
 	}
 
-	push(val: T): boolean {
+	public push(val: T): boolean {
 		this.arr.push(val);
-		++this.top;
 		return true;
 	}
 
-	pop(): T | null {
+	public pop(): T | null {
 		if (this.isEmpty()) return null;
-		const val = this.arr[this.top--]!;
-		this.arr.pop();
-		return val;
+		return this.arr.pop() ?? null;
 	}
 
-	at(pos: number): T | null {
-		if (pos > this.top || pos < 0) return null;
-		return produce(this.arr[pos]!, () => {});
+	public at(pos: number): T | null {
+		return this.arr[pos] ?? null;
 	}
 
-	get peek(): T | null {
+	public get length(): number {
+		return this.arr.length;
+	}
+
+	public get peek(): T | null {
 		if (this.isEmpty()) return null;
-		return produce(this.arr[this.top]!, () => {});
-	}
-
-	get array(): T[] {
-		return this.arr.map(el => produce(el, () => {}));
+		return this.arr[this.arr.length - 1] ?? null;
 	}
 }
 
@@ -48,11 +39,11 @@ export class FiniteStack<T> extends Stack<T> {
 		super(prevStack);
 	}
 
-	isFull(): boolean {
-		return this.top === this.size - 1;
+	public isFull(): boolean {
+		return this.arr.length === this.size;
 	}
 
-	push(val: T): boolean {
+	public push(val: T): boolean {
 		return !this.isFull() && super.push(val);
 	}
 }

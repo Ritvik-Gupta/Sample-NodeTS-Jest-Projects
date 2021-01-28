@@ -1,27 +1,3 @@
-// import { LazyArray } from "./src/LazyArray";
-// import sizeof from "object-sizeof";
-
-// const arr = Array.from({ length: 10 }, (_, pos) => pos * 15);
-// console.log("Array :\t", arr);
-
-// console.time("Lazy Array");
-// const lazyArray = LazyArray.create(arr)
-// 	.map(({ val, pos }) => ({
-// 		element: val,
-// 		cos: Math.cos((Math.PI / 180) * val),
-// 		str: pos.toString(),
-// 	}))
-// 	.filter(({ pos }) => pos % 2 === 0);
-// console.log(lazyArray.debug(1));
-// console.log(lazyArray.reduce(({ val, collected }) => collected + val.cos, { collected: 0 }));
-// console.log(lazyArray.debug(2));
-// const lazyArray1 = LazyArray.create(arr).roundWalk(7, 15);
-// console.log(lazyArray1.debug(2));
-// console.log(lazyArray1.roundWalk(2, 4).debug(2));
-// console.timeEnd("Lazy Array");
-// console.log("\n\n");
-// console.log(sizeof(lazyArray));
-
 // import { Graph, DirectedGraph } from "./src/Graph";
 
 // let directedGraph = new DirectedGraph<null>();
@@ -77,57 +53,29 @@
 
 import { BPlusTree } from "./src/BPlusTree";
 
-const treeOptions = {
-	branchingFactor: 3,
-	normalize: (x: number) => x,
-};
+const tree = new BPlusTree<number, number>(
+	5,
+	(a, b) => (a < b ? "lower" : a > b ? "higher" : "equal"),
+	{ softUpdate: true }
+);
 
-const tree = new BPlusTree<number>(treeOptions);
+// const arr: [number, string][] = [
+// 	[20, "A"],
+// 	[30, "B"],
+// 	[40, "C"],
+// 	[50, "D"],
+// 	[10, "E"],
+// 	[0, "F"],
+// 	[-10, "G"],
+// 	[100, "H"],
+// 	[-20, "I"],
+// 	[-30, "J"],
+// 	[-40, "K"],
+// 	[90, "L"],
+// ];
 
-tree.append(20);
-tree.print();
-console.log("(A)\n");
+const arr: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
-tree.append(30);
-tree.print();
-console.log("(A)\n");
-
-tree.append(40);
-tree.print();
-console.log("(A)\n");
-
-tree.append(50);
-tree.print();
-console.log("(A)\n");
-
-tree.append(10);
-tree.print();
-console.log("(A)\n");
-
-tree.append(0);
-tree.print();
-console.log("(A)\n");
-
-tree.append(-10);
-tree.print();
-console.log("(A)\n");
-
-tree.append(100);
-tree.print();
-console.log("(A)\n");
-
-tree.append(0);
-tree.print();
-console.log("(A)\n");
-
-tree.append(10);
-tree.print();
-console.log("(A)\n");
-
-tree.append(20);
-tree.print();
-console.log("(A)\n");
-
-tree.append(20);
-tree.print();
-console.log("(A)\n");
+arr.forEach(key => tree.insert({ key, value: key * 10 }));
+console.log(JSON.stringify(tree, null, "<\t"));
+tree.entries.forEach(({ key }) => console.log(tree.search(key)));
