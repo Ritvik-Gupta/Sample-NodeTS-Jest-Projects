@@ -59,21 +59,6 @@ const tree = new BPlusTree<number, number>(
 	{ softUpdate: true }
 );
 
-// const arr: [number, string][] = [
-// 	[20, "A"],
-// 	[30, "B"],
-// 	[40, "C"],
-// 	[50, "D"],
-// 	[10, "E"],
-// 	[0, "F"],
-// 	[-10, "G"],
-// 	[100, "H"],
-// 	[-20, "I"],
-// 	[-30, "J"],
-// 	[-40, "K"],
-// 	[90, "L"],
-// ];
-
 const arr: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
 arr.forEach(key => tree.insert({ key, value: key * 10 }));

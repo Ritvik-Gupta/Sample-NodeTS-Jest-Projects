@@ -84,25 +84,22 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 	}
 
 	public get hasOrderedSubTrees(): boolean {
-		type rect = { lowerRange?: T; higherRange?: T };
-
-		const indicesStack: Stack<rect> = new Stack();
+		type parentRange = Partial<Record<"lowerRange" | "higherRange", T>>;
+		const indicesStack: Stack<parentRange> = new Stack([{}]);
 		const nodeStack: Stack<BPlusNode<T>> = new Stack([this.root]);
 
 		while (nodeStack.length > 0) {
 			const node = nodeStack.pop()!;
-			if (node !== this.root) {
-				const { higherRange, lowerRange } = indicesStack.pop()!;
+			const { higherRange, lowerRange } = indicesStack.pop()!;
 
-				node.key.forEach((key, pos) => {
-					if (higherRange !== undefined && this.compare(key, higherRange) !== "lower") return false;
-					if (lowerRange !== undefined) {
-						const priority = this.compare(key, lowerRange);
-						if (pos === 0 && node instanceof LeafNode && priority !== "equal") return false;
-						else if (priority !== "higher") return false;
-					}
-				});
-			}
+			node.key.forEach((key, pos) => {
+				if (higherRange !== undefined && this.compare(key, higherRange) !== "lower") return false;
+				if (lowerRange !== undefined) {
+					const priority = this.compare(key, lowerRange);
+					if (pos === 0 && node instanceof LeafNode && priority !== "equal") return false;
+					else if (priority !== "higher") return false;
+				}
+			});
 
 			if (node instanceof InternalNode) {
 				const treeNode = node as InternalNode<T, U>;
@@ -153,7 +150,7 @@ describe("Mock B+ Tree Instance and check for correctness", () => {
 		expect(treeMock.hasConsistentEntries).toBeTruthy();
 		expect(treeMock.hasConsistentTreeHeight).toBeTruthy();
 		expect(treeMock.hasNoUnusedIndexKeys).toBeTruthy();
-		// expect(treeMock.hasOrderedSubTrees).toBeTruthy();
+		expect(treeMock.hasOrderedSubTrees).toBeTruthy();
 	};
 
 	test("Check the Entries after each Insert operation", () => {
