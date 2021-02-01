@@ -106,16 +106,9 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 
 				treeNode.branch.forEach((branch, pos) => {
 					nodeStack.push(branch);
-					indicesStack.push(
-						pos === 0
-							? { higherRange: treeNode.key.get(pos) }
-							: pos === treeNode.numKeys
-							? { lowerRange: treeNode.key.get(pos - 1) }
-							: {
-									higherRange: treeNode.key.get(pos),
-									lowerRange: treeNode.key.get(pos - 1),
-							  }
-					);
+					const higherRange = pos === 0 ? treeNode.key.get(pos) : undefined;
+					const lowerRange = pos === treeNode.numKeys ? treeNode.key.get(pos - 1) : undefined;
+					indicesStack.push({ higherRange, lowerRange });
 				});
 			}
 		}
@@ -124,6 +117,7 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 }
 
 type mockKey = { num: number; str: string };
+type mockTreeEntry<T, U> = IBPlusTreeEntry<T, U> & { updatedVal: U };
 
 const sortKeyFn = (a: mockKey, b: mockKey) => {
 	if (a.num > b.num) return 1;
@@ -154,20 +148,23 @@ describe("Mock B+ Tree Instance and check for correctness", () => {
 	};
 
 	test("Check the Entries after each Insert operation", () => {
-		const arr: IBPlusTreeEntry<mockKey, string>[] = [
-			{ key: { num: 20, str: "c" }, value: "A" },
-			{ key: { num: 10, str: "a" }, value: "B" },
-			{ key: { num: 10, str: "b" }, value: "C" },
-			{ key: { num: 20, str: "b" }, value: "D" },
-			{ key: { num: 40, str: "b" }, value: "E" },
-			{ key: { num: 30, str: "b" }, value: "F" },
+		const arr: mockTreeEntry<mockKey, string>[] = [
+			{ key: { num: 20, str: "c" }, value: "A", updatedVal: "P" },
+			{ key: { num: 10, str: "a" }, value: "B", updatedVal: "Q" },
+			{ key: { num: 10, str: "b" }, value: "C", updatedVal: "R" },
+			{ key: { num: 20, str: "b" }, value: "D", updatedVal: "S" },
+			{ key: { num: 40, str: "b" }, value: "E", updatedVal: "T" },
+			{ key: { num: 30, str: "b" }, value: "F", updatedVal: "U" },
 		];
 
 		arr.forEach(({ key, value }, idx) => {
 			treeMock.insert({ key, value });
 			treeMockValidationFn();
 			expect(treeMock.entries).toEqual(
-				arr.filter((_, pos) => pos <= idx).sort((a, b) => sortKeyFn(a.key, b.key))
+				arr
+					.map(({ key, value }) => ({ key, value }))
+					.filter((_, pos) => pos <= idx)
+					.sort((a, b) => sortKeyFn(a.key, b.key))
 			);
 		});
 
@@ -175,8 +172,25 @@ describe("Mock B+ Tree Instance and check for correctness", () => {
 			treeMock.insert({ key: { num: 40, str: "b" }, value: "X" });
 		}).toThrowError("Duplicate Key found. Insertion Failed");
 
-		arr.forEach(({ key, value }) => {
-			expect(treeMock.search(key)).toEqual(value);
+		arr.forEach(({ key, value, updatedVal }, idx) => {
+			const prevVal = treeMock.update({ key, value: updatedVal });
+			treeMockValidationFn();
+			expect(prevVal).toEqual(value);
+			expect(treeMock.entries).toEqual(
+				arr
+					.map(({ key, value, updatedVal }, pos) =>
+						pos <= idx ? { key, value: updatedVal } : { key, value }
+					)
+					.sort((a, b) => sortKeyFn(a.key, b.key))
+			);
+		});
+
+		expect(() => {
+			treeMock.update({ key: { num: 10, str: "c" }, value: "X" });
+		}).toThrowError("Invalid Key, not present in the Tree");
+
+		arr.forEach(({ key, updatedVal }) => {
+			expect(treeMock.search(key)).toEqual(updatedVal);
 		});
 	});
 });

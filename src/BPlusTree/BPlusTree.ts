@@ -104,7 +104,7 @@ export class BPlusTree<T, U> {
 		if (node instanceof InternalNode) {
 			const treeNode = node as InternalNode<T, U>;
 			return this.updateHelper(treeNode.branch.get(updatePos), key, value);
-		} else throw Error("Invalid Key. Not present in the Tree");
+		} else throw Error("Invalid Key, not present in the Tree");
 	}
 
 	public update({ key, value }: IBPlusTreeEntry<T, U>): U {
