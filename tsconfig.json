@@ -6,7 +6,7 @@
 		"moduleResolution": "node",
 		"allowJs": true,
 		"noImplicitAny": true,
-		"declaration": false,
+		"declaration": true,
 		"downlevelIteration": true,
 		"skipLibCheck": true,
 		"strict": true,

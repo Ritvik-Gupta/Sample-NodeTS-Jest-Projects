@@ -5,3 +5,4 @@ dist/
 
 jest.config.ts
 tsconfig.json
+try.ts

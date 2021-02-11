@@ -1,3 +1,4 @@
-export * from "./DirectedGraph";
-export * from "./Graph";
-export * from "./GraphNode";
+export * from "./DirectedGraph"
+export * from "./Graph"
+export * from "./GraphNode"
+export * from "./GridMap"

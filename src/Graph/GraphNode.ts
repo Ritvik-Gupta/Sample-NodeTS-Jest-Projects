@@ -1,30 +1,53 @@
-import { immerable, produce } from "immer";
-import { createParamDecorator } from "../assets";
+import { createParamDecorator, Int, Unsigned, Validate } from "../assets";
 
 export const ID = createParamDecorator(param => ({
 	validate: typeof param === "string" && GraphNode.validate(param),
 	error: Error(`Node with ID = '${param}' not Initialized`),
 }));
 
-export interface IGraphNode<T> {
-	readonly id: string;
-	readonly value: T;
+export interface IWeight {
+	weight: number;
 }
 
-export class GraphNode<T> implements IGraphNode<T> {
-	readonly [immerable] = true;
+export interface IEdge<T> extends IWeight {
+	neighbour: GraphNode<T>;
+}
+
+export class GraphNode<T> {
 	private static readonly createdNodeIds: string[] = [];
 
-	public constructor(public readonly id: string, private readonly val: T) {
-		if (GraphNode.validate(id) === true) throw Error(`Duplicate Id = '${id}' found for Nodes`);
-		GraphNode.createdNodeIds.push(id);
+	private readonly neighbours: Map<string, IEdge<T>>;
+
+	public constructor(public readonly id: string, public readonly value: T) {
+		if (GraphNode.validate(id) === false) GraphNode.createdNodeIds.push(id);
+		this.neighbours = new Map();
 	}
 
 	public static validate(id: string): boolean {
 		return GraphNode.createdNodeIds.includes(id);
 	}
 
-	public get value(): T {
-		return produce(this.val, () => {});
+	public *each() {
+		for (const [, neighbour] of this.neighbours) yield neighbour;
+	}
+
+	@Validate
+	public add(neighbour: GraphNode<T>, @Unsigned @Int weight: number): void {
+		this.neighbours.set(neighbour.id, { neighbour, weight });
+	}
+
+	@Validate
+	public has(@ID neighbourId: string): boolean {
+		return this.neighbours.has(neighbourId);
+	}
+
+	public log(): void {
+		console.log("Node :\t", this.id);
+		console.log("Value :\t", this.value);
+		console.log("Neighbours :");
+		this.neighbours.forEach(({ neighbour, weight }) => {
+			console.log("\tNeighbour ID :\t", neighbour.id);
+			console.log("\tWeight :\t", weight);
+		});
 	}
 }

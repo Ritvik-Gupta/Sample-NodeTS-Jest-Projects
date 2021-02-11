@@ -1,31 +1,20 @@
 import { Int, Unsigned, Validate } from "../assets";
-import { GraphNode, ID } from "./GraphNode";
-
-interface IWeight {
-	weight: number;
-}
+import { GraphNode, ID, IWeight } from "./GraphNode";
 
 export interface INeighbour extends IWeight {
 	neighbourId: string;
-}
-
-export interface IEdge<T> extends IWeight {
-	ownerNode: GraphNode<T>;
-	neighbourNode: GraphNode<T>;
 }
 
 type IGraphCreate<T> = Record<string, [T, ...(string | INeighbour)[]]>;
 
 export class DirectedGraph<T> {
 	protected readonly vertices: Map<string, GraphNode<T>>;
-	protected readonly edges: Map<string, IEdge<T>>;
 
 	constructor() {
 		this.vertices = new Map();
-		this.edges = new Map();
 	}
 
-	public static create<T>(createConfig: IGraphCreate<T>): DirectedGraph<T> {
+	public static createDirected<T>(createConfig: IGraphCreate<T>): DirectedGraph<T> {
 		const graph = new DirectedGraph<T>();
 		const nodes = Object.entries(createConfig).map(([id, [value]]) => new GraphNode(id, value));
 		graph.push(nodes);
@@ -66,20 +55,9 @@ export class DirectedGraph<T> {
 	}
 
 	@Validate
-	public hasNeighbour(@ID ownerId: string, @ID neighbourId: string): boolean {
-		return this.edges.has(`${ownerId}-${neighbourId}`);
-	}
-
-	@Validate
-	public connect(
-		@ID ownerId: string,
-		@ID neighbourId: string,
-		@Unsigned @Int weight: number
-	): void {
-		if (this.hasNeighbour(ownerId, neighbourId)) return;
-		const ownerNode = this.get(ownerId);
-		const neighbourNode = this.get(neighbourId);
-		this.edges.set(`${ownerId}-${neighbourId}`, { neighbourNode, ownerNode, weight });
+	public connect(@ID nodeId: string, @ID neighbourId: string, @Unsigned @Int weight: number): void {
+		const node = this.get(nodeId);
+		if (node.has(neighbourId) === false) node.add(this.get(neighbourId), weight);
 	}
 
 	@Validate
@@ -97,12 +75,11 @@ export class DirectedGraph<T> {
 			if (currentNode === undefined) break;
 
 			BFSNodes.push(currentNode);
-			this.edges.forEach(({ ownerNode, neighbourNode }) => {
-				if (ownerNode.id === currentNode.id && !visitedNodes.get(neighbourNode.id)) {
-					visitedNodes.set(neighbourNode.id, true);
-					nodeQueue.push(this.get(neighbourNode.id));
+			for (const { neighbour } of currentNode.each())
+				if (!visitedNodes.get(neighbour.id)) {
+					visitedNodes.set(neighbour.id, true);
+					nodeQueue.push(this.get(neighbour.id));
 				}
-			});
 		}
 		return BFSNodes;
 	}
@@ -124,22 +101,16 @@ export class DirectedGraph<T> {
 				visitedNodes.set(currentNode.id, true);
 				DFSNodes.push(currentNode);
 			}
-			this.edges.forEach(({ ownerNode, neighbourNode }) => {
-				if (ownerNode.id === currentNode.id && !visitedNodes.get(neighbourNode.id))
-					nodeStack.push(neighbourNode);
-			});
+			for (const { neighbour } of currentNode.each())
+				if (!visitedNodes.get(neighbour.id)) nodeStack.push(neighbour);
 		}
 		return DFSNodes;
 	}
 
 	public log() {
 		this.vertices.forEach(vertex => {
-			console.log("Node :\t", vertex);
-			console.log("Neighbours :");
-			this.edges.forEach(({ ownerNode, neighbourNode }) => {
-				if (ownerNode.id === vertex.id) console.log(neighbourNode);
-			});
-			console.log("\n\n");
+			vertex.log();
+			console.log("\n");
 		});
 	}
 }
