@@ -1,8 +1,8 @@
-import { TreeNode } from "./TreeNode";
-import { ParseTree } from "./ParseTree";
+import { ParseTree } from "./ParseTree"
+import { TreeNode } from "./TreeNode"
 
 describe(`Creating a Parse Tree r = "(a+b*).c.a*"`, () => {
-	const parseTree = new ParseTree("(a+b*).c.a*");
+	const parseTree = new ParseTree("(a+b*).c.a*")
 	const tree = new TreeNode(".")
 		.addLeft(
 			new TreeNode(".").addKids(
@@ -16,13 +16,13 @@ describe(`Creating a Parse Tree r = "(a+b*).c.a*"`, () => {
 				new TreeNode("*").addLeft(new TreeNode("a"))
 			)
 		)
-		.addRight(new TreeNode("#"));
+		.addRight(new TreeNode("#"))
 
 	test(`Parse Tree is Valid`, () => {
-		expect(parseTree.tree).toEqual(tree);
-	});
+		expect(parseTree.tree).toEqual(tree)
+	})
 
 	test(`Parse Tree is Valid`, () => {
-		expect(parseTree.checkTree()).toEqual(true);
-	});
-});
+		expect(parseTree.checkTree()).toEqual(true)
+	})
+})

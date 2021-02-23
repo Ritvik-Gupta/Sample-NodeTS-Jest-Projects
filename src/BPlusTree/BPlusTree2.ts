@@ -1,4 +1,4 @@
-import { Int, Unsigned, Validate } from "../assets"
+import { Int, Unsigned, Validate } from "@/assets"
 
 export abstract class BPlusNode<T, U> {
 	protected readonly __generic__: U | null = null

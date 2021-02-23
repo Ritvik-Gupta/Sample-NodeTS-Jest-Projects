@@ -1,22 +1,18 @@
-import { Stack } from "../Stack"
-import { BPlusNode, InternalNode, LeafNode } from "./BPlusNode"
-import { BPlusTree, comparePriorityFn, IBPlusTreeEntry, IBPlusTreeOptions } from "./BPlusTree"
+import { LinkedList } from "@/LinkedList"
+import { InternalNode, LeafNode } from "./BPlusNode"
+import { BPlusTree, IBPlusTreeEntry, priorityTypes } from "./BPlusTree"
 
 class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
-	constructor(...args: [number, comparePriorityFn<T>, IBPlusTreeOptions?]) {
-		super(...args)
-	}
-
 	public get hasConsistentEntries(): boolean {
 		let numEntries = 0
-		const nodeStack: Stack<BPlusNode<T, U>> = new Stack([this.root])
+		const nodeQueue = new LinkedList("queue", [this.root])
 
-		while (nodeStack.length > 0) {
-			const node = nodeStack.pop()!
+		while (nodeQueue.length > 0) {
+			const node = nodeQueue.delete()
 			switch (true) {
 				case node instanceof InternalNode: {
 					const treeNode = node as InternalNode<T, U>
-					treeNode.branch.forEach(branch => nodeStack.push(branch))
+					treeNode.branch.forEach(branch => nodeQueue.insert(branch))
 					break
 				}
 				case node instanceof LeafNode: {
@@ -30,18 +26,18 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 	}
 
 	public get hasConsistentTreeHeight(): boolean {
-		const nodeStack: Stack<BPlusNode<T, U>> = new Stack([this.root])
-		const levelStack: Stack<number> = new Stack([0])
+		const nodeQueue = new LinkedList("queue", [this.root])
+		const levelQueue = new LinkedList("queue", [0])
 
-		while (nodeStack.length > 0 && levelStack.length > 0) {
-			const node = nodeStack.pop()!
-			const level = levelStack.pop()!
+		while (nodeQueue.length > 0 && levelQueue.length > 0) {
+			const node = nodeQueue.delete()
+			const level = levelQueue.delete()
 			switch (true) {
 				case node instanceof InternalNode: {
 					const treeNode = node as InternalNode<T, U>
 					treeNode.branch.forEach(branch => {
-						nodeStack.push(branch)
-						levelStack.push(level + 1)
+						nodeQueue.insert(branch)
+						levelQueue.insert(level + 1)
 					})
 					break
 				}
@@ -55,10 +51,10 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 	}
 
 	public get hasCorrectNumeberOfLinks(): boolean {
-		const nodeStack: Stack<BPlusNode<T, U>> = new Stack([this.root])
+		const nodeQueue = new LinkedList("queue", [this.root])
 
-		while (nodeStack.length > 0) {
-			const node = nodeStack.pop()!
+		while (nodeQueue.length > 0) {
+			const node = nodeQueue.delete()
 			switch (true) {
 				case node instanceof InternalNode: {
 					const treeNode = node as InternalNode<T, U>
@@ -77,15 +73,15 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 
 	public get hasNoUnusedIndexKeys(): boolean {
 		let unusedIndexKeys: T[] = []
-		const nodeStack: Stack<BPlusNode<T, U>> = new Stack([this.root])
+		const nodeQueue = new LinkedList("queue", [this.root])
 
-		while (nodeStack.length > 0) {
-			const node = nodeStack.pop()!
+		while (nodeQueue.length > 0) {
+			const node = nodeQueue.delete()
 			switch (true) {
 				case node instanceof InternalNode: {
 					const treeNode = node as InternalNode<T, U>
 					treeNode.key.forEach(key => unusedIndexKeys.push(key))
-					treeNode.branch.forEach(branch => nodeStack.push(branch))
+					treeNode.branch.forEach(branch => nodeQueue.insert(branch))
 					break
 				}
 				case node instanceof LeafNode: {
@@ -104,12 +100,12 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 
 	public get hasOrderedSubTrees(): boolean {
 		type parentRange = Partial<Record<"lowerRange" | "higherRange", T>>
-		const indicesStack: Stack<parentRange> = new Stack([{}])
-		const nodeStack: Stack<BPlusNode<T, U>> = new Stack([this.root])
+		const nodeQueue = new LinkedList("queue", [this.root])
+		const indicesQueue = new LinkedList<parentRange>("queue", [{}])
 
-		while (nodeStack.length > 0) {
-			const node = nodeStack.pop()!
-			const { higherRange, lowerRange } = indicesStack.pop()!
+		while (nodeQueue.length > 0) {
+			const node = nodeQueue.delete()
+			const { higherRange, lowerRange } = indicesQueue.delete()
 
 			node.key.forEach((key, pos) => {
 				if (higherRange !== undefined && this.compare(key, higherRange) !== "lower") return false
@@ -123,8 +119,8 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 			if (node instanceof InternalNode) {
 				const treeNode = node as InternalNode<T, U>
 				treeNode.branch.forEach((branch, pos) => {
-					nodeStack.push(branch)
-					indicesStack.push({
+					nodeQueue.insert(branch)
+					indicesQueue.insert({
 						higherRange: pos === 0 ? treeNode.key.get(pos) : undefined,
 						lowerRange: pos === treeNode.numKeys ? treeNode.key.get(pos - 1) : undefined,
 					})
@@ -135,55 +131,87 @@ class BPlusTreeMock<T, U> extends BPlusTree<T, U> {
 	}
 }
 
-type mockKey = { num: number; str: string }
-type mockTreeEntry<T, U> = IBPlusTreeEntry<T, U> & { updatedVal: U }
+const priorities: priorityTypes[] = ["lower", "equal", "higher"]
 
-const sortKeyFn = (a: mockKey, b: mockKey) => {
-	if (a.num > b.num) return 1
-	else if (a.num < b.num) return -1
-	else {
-		if (a.str > b.str) return 1
-		else if (a.str < b.str) return -1
-		return 0
-	}
+type sortKeyFn<T> = (a: T, b: T) => -1 | 0 | 1
+const treeMockValidationFn = <T, U>(tree: BPlusTreeMock<T, U>) => {
+	expect(tree.hasCorrectNumeberOfLinks).toBeTruthy()
+	expect(tree.hasConsistentEntries).toBeTruthy()
+	expect(tree.hasConsistentTreeHeight).toBeTruthy()
+	expect(tree.hasNoUnusedIndexKeys).toBeTruthy()
+	expect(tree.hasOrderedSubTrees).toBeTruthy()
 }
 
-describe("Mock B+ Tree Instance and check for correctness", () => {
-	const treeMock = new BPlusTreeMock<mockKey, string>(
-		5,
-		(a, b) => {
-			const result = sortKeyFn(a, b)
-			return result === -1 ? "lower" : result === 1 ? "higher" : "equal"
-		},
-		{ softUpdate: false }
-	)
-
-	const treeMockValidationFn = () => {
-		expect(treeMock.hasCorrectNumeberOfLinks).toBeTruthy()
-		expect(treeMock.hasConsistentEntries).toBeTruthy()
-		expect(treeMock.hasConsistentTreeHeight).toBeTruthy()
-		expect(treeMock.hasNoUnusedIndexKeys).toBeTruthy()
-		expect(treeMock.hasOrderedSubTrees).toBeTruthy()
-	}
+describe("Mock B+ Tree Instance with random values", () => {
+	const sortKey: sortKeyFn<number> = (a, b) => (a > b ? 1 : a < b ? -1 : 0)
+	const arr: IBPlusTreeEntry<number, string>[] = Array.from({ length: 100 }, (_, idx) => ({
+		key: idx,
+		value: idx.toString(),
+	}))
 
 	test("Check the Entries after each Insert operation", () => {
-		const arr: mockTreeEntry<mockKey, string>[] = [
-			{ key: { num: 20, str: "c" }, value: "A", updatedVal: "P" },
-			{ key: { num: 10, str: "a" }, value: "B", updatedVal: "Q" },
-			{ key: { num: 10, str: "b" }, value: "C", updatedVal: "R" },
-			{ key: { num: 20, str: "b" }, value: "D", updatedVal: "S" },
-			{ key: { num: 40, str: "b" }, value: "E", updatedVal: "T" },
-			{ key: { num: 30, str: "b" }, value: "F", updatedVal: "U" },
-		]
+		const treeMock = new BPlusTreeMock<number, string>(
+			5,
+			(a, b) => priorities[sortKey(a, b) + 1]!,
+			{ softUpdate: false }
+		)
 
 		arr.forEach(({ key, value }, idx) => {
 			treeMock.insert({ key, value })
-			treeMockValidationFn()
+			treeMockValidationFn(treeMock)
+			expect(treeMock.entries).toEqual(
+				arr.filter((_, pos) => pos <= idx).sort((a, b) => sortKey(a.key, b.key))
+			)
+		})
+
+		arr.forEach(({ key, value }) => {
+			expect(treeMock.search(key)).toEqual(value)
+		})
+	})
+})
+
+describe("Mock B+ Tree Instance with Higher Order Key Structures", () => {
+	type mockKey = { num: number; str: string }
+	type mockTreeEntry<T, U> = IBPlusTreeEntry<T, U> & { updatedVal: U }
+
+	const sortKey: sortKeyFn<mockKey> = (a, b) => {
+		if (a.num > b.num) return 1
+		else if (a.num < b.num) return -1
+		else {
+			if (a.str > b.str) return 1
+			else if (a.str < b.str) return -1
+			return 0
+		}
+	}
+
+	const arr: mockTreeEntry<mockKey, string>[] = [
+		{ key: { num: 20, str: "c" }, value: "A01", updatedVal: "B01" },
+		{ key: { num: 10, str: "a" }, value: "A02", updatedVal: "B02" },
+		{ key: { num: 10, str: "b" }, value: "A03", updatedVal: "B03" },
+		{ key: { num: 20, str: "b" }, value: "A04", updatedVal: "B04" },
+		{ key: { num: 40, str: "b" }, value: "A05", updatedVal: "B05" },
+		{ key: { num: 30, str: "b" }, value: "A06", updatedVal: "B06" },
+		{ key: { num: 30, str: "c" }, value: "A07", updatedVal: "B07" },
+		{ key: { num: 60, str: "a" }, value: "A08", updatedVal: "B08" },
+		{ key: { num: 70, str: "b" }, value: "A09", updatedVal: "B09" },
+		{ key: { num: 70, str: "c" }, value: "A10", updatedVal: "B10" },
+	]
+
+	test("Check the Entries after each Insert operation", () => {
+		const treeMock = new BPlusTreeMock<mockKey, string>(
+			3,
+			(a, b) => priorities[sortKey(a, b) + 1]!,
+			{ softUpdate: false }
+		)
+
+		arr.forEach(({ key, value }, idx) => {
+			treeMock.insert({ key, value })
+			treeMockValidationFn(treeMock)
 			expect(treeMock.entries).toEqual(
 				arr
 					.map(({ key, value }) => ({ key, value }))
 					.filter((_, pos) => pos <= idx)
-					.sort((a, b) => sortKeyFn(a.key, b.key))
+					.sort((a, b) => sortKey(a.key, b.key))
 			)
 		})
 
@@ -193,14 +221,14 @@ describe("Mock B+ Tree Instance and check for correctness", () => {
 
 		arr.forEach(({ key, value, updatedVal }, idx) => {
 			const prevVal = treeMock.update({ key, value: updatedVal })
-			treeMockValidationFn()
+			treeMockValidationFn(treeMock)
 			expect(prevVal).toEqual(value)
 			expect(treeMock.entries).toEqual(
 				arr
 					.map(({ key, value, updatedVal }, pos) =>
 						pos <= idx ? { key, value: updatedVal } : { key, value }
 					)
-					.sort((a, b) => sortKeyFn(a.key, b.key))
+					.sort((a, b) => sortKey(a.key, b.key))
 			)
 		})
 
@@ -213,5 +241,3 @@ describe("Mock B+ Tree Instance and check for correctness", () => {
 		})
 	})
 })
-
-describe("Mock B+ Tree Instance with random values", () => {})

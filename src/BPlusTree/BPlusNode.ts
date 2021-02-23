@@ -1,4 +1,4 @@
-import { iterativeFn } from "../assets"
+import { iterativeFn } from "@/assets"
 
 type customGenArrayObj<T> = {
 	get: (index: number) => T

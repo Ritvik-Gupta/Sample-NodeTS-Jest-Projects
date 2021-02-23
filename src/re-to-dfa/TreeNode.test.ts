@@ -1,9 +1,9 @@
-import { TreeNode } from "./TreeNode";
+import { TreeNode } from "./TreeNode"
 
 const checkUnitValidity: Array<{
-	regExp: string;
-	tree: TreeNode;
-	valid: boolean;
+	regExp: string
+	tree: TreeNode
+	valid: boolean
 }> = [
 	{
 		regExp: "(a+b)",
@@ -18,12 +18,12 @@ const checkUnitValidity: Array<{
 		),
 		valid: true,
 	},
-];
+]
 
 describe(`Checking Unit Validity for a Unit of Parse Tree`, () => {
 	checkUnitValidity.forEach(({ regExp, tree, valid }) => {
 		test(`r = "${regExp}" is Valid`, () => {
-			expect(TreeNode.isValid(tree)).toBe(valid);
-		});
-	});
-});
+			expect(TreeNode.isValid(tree)).toBe(valid)
+		})
+	})
+})

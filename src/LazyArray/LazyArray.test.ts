@@ -1,77 +1,100 @@
-import { arrayRoundWalk, ArrCtx, createArrayGen, LazyArray } from "./LazyArray";
+import { ArrCtx, createArrayGen, LazyArray } from "./LazyArray"
+
+const arrayRoundWalk = <T>(arr: T[], skip: number, take: number): T[] => {
+	if (arr.length === 0) return []
+	if (skip <= 0) skip = 1
+	if (take <= 0) take = 1
+	const roundArr: T[] = []
+	let pos = 0,
+		counted = 0
+	while (pos < take) {
+		for (const elm of arr) {
+			++counted
+			if (counted % skip === 0) {
+				++pos
+				roundArr.push(elm)
+				if (pos === take) break
+			}
+		}
+	}
+	return roundArr
+}
 
 const dataset: number[][] = [
 	Array.from({ length: 10 }, (_, pos) => pos * 15),
 	Array.from({ length: 100 }, () => Math.random()),
 	Array.from({ length: 50 }, (_, pos) => pos * Math.random()),
 	Array.from({ length: 0 }, (_, pos) => pos),
-];
+]
 
 describe.each(dataset)("Compare the Array Generators using Array (%#)", (...array) => {
 	test("Compare different Iterations", () => {
-		const gen = createArrayGen(array);
-		let nextItr = gen.next("none");
+		const gen = createArrayGen(array)
+		let nextItr = gen.next("none")
 
-		const collectItr1: ArrCtx<number>[] = [];
+		const collectItr1: ArrCtx<number>[] = []
 		while (nextItr.done === false && nextItr.value.iteration < 1) {
-			collectItr1.push({ val: nextItr.value.val, pos: nextItr.value.pos });
-			nextItr = gen.next("none");
+			collectItr1.push({ val: nextItr.value.val, pos: nextItr.value.pos })
+			nextItr = gen.next("none")
 		}
 
-		const collectItr2: ArrCtx<number>[] = [];
+		const collectItr2: ArrCtx<number>[] = []
 		while (nextItr.done === false && nextItr.value.iteration < 2) {
-			collectItr2.push({ val: nextItr.value.val, pos: nextItr.value.pos });
-			nextItr = gen.next("none");
+			collectItr2.push({ val: nextItr.value.val, pos: nextItr.value.pos })
+			nextItr = gen.next("none")
 		}
 
-		expect(collectItr1).toEqual(collectItr2);
-	});
-});
+		expect(collectItr1).toEqual(collectItr2)
+	})
+})
 
 describe.each(dataset)("Compare the Lazy Array Implementation using Array (%#)", (...array) => {
-	const lazyArr = LazyArray.create(array);
+	const lazyArr = LazyArray.clone(array)
+
 	test("Compare Lazy Array", () => {
-		expect(lazyArr.debug(2)).toEqual(lazyArr.debug(2));
-		expect(array).toEqual(lazyArr.collect());
-	});
+		expect(lazyArr.debug(2)).toEqual(lazyArr.debug(2))
+		expect(array).toEqual(lazyArr.collect())
+	})
 
 	const mappedArr = array.map((val, pos) => ({
 		element: val,
 		cos: Math.cos((Math.PI / 180) * val),
 		str: pos.toString(),
-	}));
+	}))
 	const mappedLazyArr = lazyArr.map(({ val, pos }) => ({
 		element: val,
 		cos: Math.cos((Math.PI / 180) * val),
 		str: pos.toString(),
-	}));
-	test("Compare Mapped Lazy Array", () => {
-		expect(mappedLazyArr.debug(3)).toEqual(mappedLazyArr.debug(3));
-		expect(mappedArr).toEqual(mappedLazyArr.collect());
-	});
+	}))
 
-	const filteredArr = mappedArr.filter((val, pos) => pos % 2 === 0 || val.cos > 0);
-	const filteredLazyArr = mappedLazyArr.filter(({ val, pos }) => pos % 2 === 0 || val.cos > 0);
+	test("Compare Mapped Lazy Array", () => {
+		expect(mappedLazyArr.debug(3)).toEqual(mappedLazyArr.debug(3))
+		expect(mappedArr).toEqual(mappedLazyArr.collect())
+	})
+
+	const filteredArr = mappedArr.filter((val, pos) => pos % 2 === 0 || val.cos > 0)
+	const filteredLazyArr = mappedLazyArr.filter(({ val, pos }) => pos % 2 === 0 || val.cos > 0)
 
 	test("Compare Filtered Lazy Array", () => {
-		expect(filteredLazyArr.debug(4)).toEqual(filteredLazyArr.debug(4));
-		expect(filteredArr).toEqual(filteredLazyArr.collect());
-	});
+		expect(filteredLazyArr.debug(4)).toEqual(filteredLazyArr.debug(4))
+		expect(filteredArr).toEqual(filteredLazyArr.collect())
+	})
 
 	const reducedFilteredLazyVal = filteredLazyArr.reduce(
 		({ val, collected }) => collected - val.cos * val.element,
 		{ collected: 0 }
-	);
+	)
 	const reducedMappedLazyVal = mappedLazyArr.reduce(
 		({ val, pos, collected }) =>
 			pos % 2 === 0 || val.cos > 0 ? collected - val.cos * val.element : collected,
 		{ collected: 0 }
-	);
+	)
+
 	test("Compare Reduced Values using different constructs", () => {
-		expect(reducedFilteredLazyVal).toBeCloseTo(reducedMappedLazyVal);
+		expect(reducedFilteredLazyVal).toBeCloseTo(reducedMappedLazyVal)
 		expect(
 			filteredArr.reduce((collected, val) => collected - val.cos * val.element, 0)
-		).toBeCloseTo(reducedFilteredLazyVal);
+		).toBeCloseTo(reducedFilteredLazyVal)
 
 		expect(
 			mappedArr.reduce(
@@ -79,15 +102,16 @@ describe.each(dataset)("Compare the Lazy Array Implementation using Array (%#)",
 					pos % 2 === 0 || val.cos > 0 ? collected - val.cos * val.element : collected,
 				0
 			)
-		).toBeCloseTo(reducedMappedLazyVal);
-	});
+		).toBeCloseTo(reducedMappedLazyVal)
+	})
 
-	const roundWalkLazyArr = mappedLazyArr.roundWalk(7, 10);
-	const roundWalkArr = arrayRoundWalk(mappedArr, 7, 10);
+	const roundWalkLazyArr = mappedLazyArr.roundWalk(7, 10)
+	const roundWalkArr = arrayRoundWalk(mappedArr, 7, 10)
+
 	test("Compare Round Walk Values using different constructs", () => {
-		expect(roundWalkLazyArr.debug(-1)).toEqual(roundWalkLazyArr.debug(-7));
-		expect(roundWalkArr).toEqual(roundWalkLazyArr.collect());
-	});
+		expect(roundWalkLazyArr.debug(7)).toEqual(roundWalkLazyArr.debug(7))
+		expect(roundWalkArr).toEqual(roundWalkLazyArr.collect())
+	})
 
 	test("Compare Instant Lazy Chaining", () => {
 		expect(
@@ -105,8 +129,8 @@ describe.each(dataset)("Compare the Lazy Array Implementation using Array (%#)",
 					elm: val,
 					log: Math.log(val),
 				})),
-				-9,
-				-8
+				10,
+				8
 			)
 		).toEqual(
 			lazyArr
@@ -122,8 +146,8 @@ describe.each(dataset)("Compare the Lazy Array Implementation using Array (%#)",
 					elm,
 					log,
 				}))
-				.roundWalk(0, -10)
+				.roundWalk(10, 8)
 				.collect()
-		);
-	});
-});
+		)
+	})
+})

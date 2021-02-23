@@ -1,13 +1,12 @@
+import chalk from "chalk"
 import inquirer, {
 	Answers,
 	CheckboxQuestion,
-	InputQuestion,
 	ConfirmQuestion,
+	InputQuestion,
 	ListQuestion,
-} from "inquirer";
-import chalk from "chalk";
-
-import * as $ from "./stackTypes";
+} from "inquirer"
+import * as $ from "./stackTypes"
 
 async function initStackAskQs(typeChecking: $.TypeChecking): Promise<Answers> {
 	const initStackQs: [CheckboxQuestion, ConfirmQuestion, InputQuestion] = [
@@ -32,19 +31,19 @@ async function initStackAskQs(typeChecking: $.TypeChecking): Promise<Answers> {
 			when: ({ isFiniteStack }: Answers) => isFiniteStack,
 			transformer: (ans: string): string => {
 				if (!typeChecking["NUMBER"](ans) || Number(ans) <= 0 || Number(ans) >= 100)
-					return chalk.red.underline.bold(ans);
-				return chalk.blue(ans);
+					return chalk.red.underline.bold(ans)
+				return chalk.blue(ans)
 			},
 			validate: (ans: string): boolean | string => {
-				if (!typeChecking["NUMBER"](ans)) return "Enter a Valid Integer";
-				if (Number(ans) <= 0) return "Stack Size should be > 0";
-				if (Number(ans) >= 100) return "Stack Size should be < 100";
-				return true;
+				if (!typeChecking["NUMBER"](ans)) return "Enter a Valid Integer"
+				if (Number(ans) <= 0) return "Stack Size should be > 0"
+				if (Number(ans) >= 100) return "Stack Size should be < 100"
+				return true
 			},
 		},
-	];
-	const answers = await inquirer.prompt(initStackQs);
-	return answers;
+	]
+	const answers = await inquirer.prompt(initStackQs)
+	return answers
 }
 
 async function chooseOperAskQs(applyOperations: $.ApplyOperations): Promise<Answers> {
@@ -54,9 +53,9 @@ async function chooseOperAskQs(applyOperations: $.ApplyOperations): Promise<Answ
 		loop: false,
 		choices: Object.keys(applyOperations),
 		message: "Choose an Operation to perform on the Stack :",
-	};
-	const answers = await inquirer.prompt(chooseOperQs);
-	return answers;
+	}
+	const answers = await inquirer.prompt(chooseOperQs)
+	return answers
 }
 
 async function getPushValueAskQs(
@@ -78,18 +77,18 @@ async function getPushValueAskQs(
 			type: "input",
 			message: "Enter a Value to Push :\t",
 			when: ({ typeChosen }: Answers): boolean => {
-				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0];
-				return valueType !== "BOOLEAN";
+				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0]
+				return valueType !== "BOOLEAN"
 			},
 			transformer: (ans: string, { typeChosen }: Answers): string => {
-				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0];
-				if (!typeChecking[valueType](ans)) return chalk.red.underline.bold(ans);
-				return chalk.blue(ans);
+				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0]
+				if (!typeChecking[valueType](ans)) return chalk.red.underline.bold(ans)
+				return chalk.blue(ans)
 			},
 			validate: (ans: string, { typeChosen }: Answers): boolean | string => {
-				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0];
-				if (!typeChecking[valueType](ans)) return "Enter a Valid Push for the given Type";
-				return true;
+				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0]
+				if (!typeChecking[valueType](ans)) return "Enter a Valid Push for the given Type"
+				return true
 			},
 		},
 		{
@@ -98,13 +97,13 @@ async function getPushValueAskQs(
 			choices: ["true", "false"],
 			message: "Enter a Value to Push :\t",
 			when: ({ typeChosen }: Answers): boolean => {
-				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0];
-				return valueType === "BOOLEAN";
+				const valueType = hasMultipleTypes ? <$.defTypes>typeChosen : types[0]
+				return valueType === "BOOLEAN"
 			},
 		},
-	];
-	const answers = await inquirer.prompt(getPushValueQs);
-	return answers;
+	]
+	const answers = await inquirer.prompt(getPushValueQs)
+	return answers
 }
 
-export { initStackAskQs, chooseOperAskQs, getPushValueAskQs };
+export { initStackAskQs, chooseOperAskQs, getPushValueAskQs }

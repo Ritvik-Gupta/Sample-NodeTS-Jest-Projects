@@ -1,4 +1,4 @@
-import { Int, iterativeFn, Unsigned, Validate } from "../assets"
+import { Int, iterativeFn, Unsigned, Validate } from "@/assets"
 
 export type mapCallbackFn<T, U> = iterativeFn<T, U>
 

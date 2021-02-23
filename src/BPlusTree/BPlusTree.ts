@@ -1,7 +1,9 @@
-import { Int, Unsigned, Validate } from "../assets"
+import { Int, Unsigned, Validate } from "@/assets"
+import { LinkedList } from "@/LinkedList"
 import { BPlusNode, InternalNode, ISplitBranch, LeafNode } from "./BPlusNode"
 
-export type comparePriorityFn<T> = (keyA: T, keyB: T) => "higher" | "lower" | "equal"
+export type priorityTypes = "higher" | "equal" | "lower"
+export type comparePriorityFn<T> = (keyA: T, keyB: T) => priorityTypes
 
 export interface IBPlusTreeEntry<T, U> {
 	key: T
@@ -143,14 +145,14 @@ export class BPlusTree<T, U> {
 
 	public get entries(): IBPlusTreeEntry<T, U>[] {
 		const entries: IBPlusTreeEntry<T, U>[] = []
-		const entryQueue: BPlusNode<T, U>[] = [this.root]
+		const entryQueue = new LinkedList("queue", [this.root])
 
 		while (entryQueue.length > 0) {
-			const node = entryQueue.shift()!
+			const node = entryQueue.delete()
 			switch (true) {
 				case node instanceof InternalNode: {
 					const treeNode = node as InternalNode<T, U>
-					treeNode.branch.forEach(branch => entryQueue.push(branch))
+					treeNode.branch.forEach(branch => entryQueue.insert(branch))
 					break
 				}
 				case node instanceof LeafNode: {
