@@ -3,6 +3,7 @@ coverage/
 dist/
 .vscode
 
+package-lock.json
 jest.config.ts
 tsconfig.json
 try.ts
